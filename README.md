@@ -24,20 +24,19 @@ embodied-foundation-models-playground/
 │   ├── envs/           # Environment wrappers (Push-T, MuJoCo)
 │   └── utils/          # Processing primitives (Action Chunking, Normalization)
 └── notebooks/          # Exploratory research and math prototyping
+```
 
+---
 
-## 📓 Technical Journal & Milestones
+## 📓Technical Journal & Milestones
 
-### 🟢 Phase 1: Environment & Perception
-* **Hardware-Aware Setup:** Configured a native ARM64 environment on macOS (M3) utilizing **MPS (Metal Performance Shaders)** for GPU-accelerated inference.
-* **Simulation Sandbox:** Integrated the **Push-T** benchmark for validating imitation learning algorithms.
-* **Vision-Action Loop:** Verified the perception pipeline by rendering RGB observations into high-fidelity rollout videos.
-* **Status:** Complete. `scripts/day1_env_test.py` successfully generates verified environment rollouts.
+### 🟢 1. Environment Setup
 
-### 🟡 Phase 2: Action Primitives & Behavioral Cloning
-* **Action Chunking:** Implementing temporal aggregation to mitigate compounding errors in long-horizon tasks.
-* **Baseline IL:** Training MLP-based policies to establish performance benchmarks.
-* **Status:** *In Progress*
+### 🟡 2. Behavior: Implementing Action Chunking & Baseline policies (MLP).
+
+### 3. Policy: Diffusion Policy training (denoising trajectories).
+### 4. Language: VLA grounding via language-conditioned transformers.
+
 
 ---
 
