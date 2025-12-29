@@ -30,12 +30,13 @@ embodied-foundation-models-playground/
 
 ## 📓Technical Journal & Milestones
 
-### 🟢 1. Environment Setup
+1. ✅ Environment Setup
 
-### 🟡 2. Behavior: Implementing Action Chunking & Baseline policies (MLP).
+2. Behavior: Implementing Action Chunking & Baseline policies (MLP).
 
-### 3. Policy: Diffusion Policy training (denoising trajectories).
-### 4. Language: VLA grounding via language-conditioned transformers.
+3. Policy: Diffusion Policy training (denoising trajectories).
+
+4. Language: VLA grounding via language-conditioned transformers.
 
 
 ---
