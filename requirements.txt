@@ -1,13 +1,29 @@
-# Core Dependencies
-torch>=2.2.0
-torchvision
-gymnasium
-gym-pusht
-lerobot
+# # Core Dependencies
+# torch>=2.2.0
+# torchvision
+# gymnasium
+# gym-pusht
+# lerobot
+
+# # Utilities
+# imageio[ffmpeg]
+# numpy<2.0.0  # Stable for most robotics libs
+# matplotlib
+# tqdm
+# h5py
+
+
+# Core AI & Robotics
+torch==2.5.1
+torchvision==0.20.1
+torchaudio==2.5.1
+torchcodec==0.2.0
+
+# Frameworks
+lerobot[pusht]
 
 # Utilities
 imageio[ffmpeg]
-numpy<2.0.0  # Stable for most robotics libs
-matplotlib
-tqdm
-h5py
+imageio-ffmpeg
+numpy
+pathlib

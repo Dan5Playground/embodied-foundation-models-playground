@@ -31,8 +31,11 @@ embodied-foundation-models-playground/
 ## 📓Technical Journal & Milestones
 
 1. ✅ Environment Setup
+- Standardized environment on Stable Baseline: PyTorch 2.5.1 + FFmpeg 6.1.
+- Verified expert data pipeline for Push-T task.
 
 2. Behavior: Implementing Action Chunking & Baseline policies (MLP).
+- Implemented Action Chunking utility in `src/utils/chunking.py` to prepare for high-frequency policy training. Action chunking is necessary to reduce the "effective horizon" and handles "non-Markovian" human pauses.
 
 3. Policy: Diffusion Policy training (denoising trajectories).
 

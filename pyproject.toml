@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "embodied-foundation-models-playground"
+version = "0.1.0"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
