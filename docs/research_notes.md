@@ -2,6 +2,42 @@
 
 A deep-dive log of technical insights, control theory trade-offs, and architectural decisions made during the development of this playground.
 
+##  🕹️ Control Refinement and Quantitative Evaluation
+
+**Date:** January 1, 2026
+
+**Topic:** Transition from subjective visual assessment to objective performance metrics 
+  
+### 🛠️ Implementation: Temporal Aggregation (EMA)
+A **Temporal Aggregation** wrapper was implemented using **Exponential Moving Average (EMA)** weighting. 
+
+* **The Logic:** Instead of discarding the 16-step action chunk at every frame (Receding Horizon), the controller now maintains a rolling buffer of overlapping plans.
+* **The Math:** A weighting constant $k=0.25$ was applied to blend the current prediction with historical predictions.
+* **The Benefit:** This ensures that the robot’s "intent" remains consistent across timesteps, significantly smoothing the end-effector trajectory and reducing the "shivering" effect common in naive Behavioral Cloning.
+
+---
+
+### 📊 Results & Observations
+A head-to-head comparison was conducted between the **Basic Receding Horizon** controller and the **EMA Smooth** controller over 5 episodes each.
+
+| Metric | Basic Controller | EMA (Smooth) Controller |
+| :--- | :--- | :--- |
+| **Success Rate** | 0.0% | 20.0% |
+| **Avg Max Reward** | 0.137 | 0.418 |
+| **Movement Quality** | High-frequency jitter, unstable | Fluid, human-like, purposeful |
+
+**Key Observations:**
+1. **Control vs. Intelligence:** The 3x improvement in Average Max Reward confirms that even with an identical "brain" (weights), the control strategy is a critical factor in success.
+2. **The "Contact" Problem:** Many failures (Reward: 0.0) occurred because the model failed to make initial contact with the "T" block. This suggests the MLP is highly sensitive to initial distribution shifts (the "compounding error" problem).
+3. **The Multimodal Ceiling:** Despite the smoothing, the model often fails to choose a single consistent side of the block to push. Because the expert data contains multiple ways to solve the task, the MLP head tries to "average" these paths, resulting in ineffective, "middle-of-the-road" movements.
+
+The current MLP baseline has reached its functional limit. While EMA smoothing made the policy 20% successful, the "averaging" behavior of the MLP head is preventing it from reaching SOTA performance (80%+).
+
+**Next Steps:**
+* **Architecture Upgrade:** Transition to **Diffusion Policy** to handle multimodal action distributions (allowing the model to "commit" to one path).
+* **Robustness:** Implement **Observation Augmentation** (random cropping/color jitter) to increase the model's tolerance for varied starting positions.
+
+
 ---
 ## 🧠 Policy Architecture & Baseline Training
 
