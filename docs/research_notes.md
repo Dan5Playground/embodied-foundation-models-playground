@@ -2,6 +2,45 @@
 
 A deep-dive log of technical insights, control theory trade-offs, and architectural decisions made during the development of this playground.
 
+---
+## 🎮 Generative Behavior Cloning via Diffusion Policy
+
+**Date:** January 2, 2026
+
+**Topic:** Transition from a deterministic Multi-Layer Perceptron (MLP) to a **Generative Diffusion Policy**. This move allows the robot to represent "multimodal" distributions—essentially learning that there are multiple valid paths to solve the Push-T task rather than just averaging them into a single (often failing) path.
+
+---
+
+### 🏗️ The 1D Temporal U-Net Architecture
+The "brain" of our Diffusion Policy is a 1D U-Net designed to denoise action sequences. Unlike 2D U-Nets used in image generation, this model treats the robot's action horizon as a temporal sequence.
+
+#### Architecture Details:
+* **Backbone:** ResNet-18 (with the final FC layer removed) acts as the visual feature extractor ($1 \times 512$ embedding).
+* **Action Horizon:** 16 steps (predicting $X, Y$ coordinates for the current and next 15 frames).
+* **Conditioning (FiLM):** We used **Feature-wise Linear Modulation**. The visual features and the diffusion timestep are fused into a conditioning vector that scales and shifts the activations in the U-Net.
+* **Layers:**
+    * **Downsampling:** 1D Convolutions with kernel size 5 to capture broad temporal context.
+    * **Bottleneck:** Deepest layer where visual context is most heavily integrated.
+    * **Upsampling:** Reconstructs the high-resolution 16-step trajectory using skip connections to preserve fine-grained control details.
+* **Activation:** `nn.Mish()` was used throughout for smoother gradients during the iterative denoising process.
+
+---
+### 📈 Training Summary
+* **Loss Function:** Mean Squared Error (MSE) between the added Gaussian noise ($\epsilon$) and the predicted noise ($\epsilon_\theta$).
+* **Normalization:** Critical implementation of Z-score normalization using dataset statistics. (Unnormalized actions led to initial losses > 100; normalized loss settled at ~0.09).
+* **Scheduler:** DDPMScheduler using a `squaredcos_cap_v2` schedule to maintain trajectory structure during the diffusion process.
+---
+
+### 🚀 SOTA Alternatives 
+If hardware constraints were removed, the following architectures represent the current frontier:
+
+1.  **Flow Matching:** Instead of Gaussian diffusion, Flow Matching learns a straight-line vector field from noise to data. It is significantly faster, often requiring only **1–3 steps** of inference.
+2.  **Diffusion Transformers (DiT):** Replacing the U-Net with a Transformer backbone. This allows the model to scale with much larger datasets and handle multi-modal inputs (e.g., 3+ camera feeds) via cross-attention more effectively.
+3.  **Consistency Models:** These models are trained to map any noise level to the final "clean" action in a **single step**, enabling extremely high-frequency control (100Hz+) without the computational overhead of iterative denoising.
+
+
+
+---
 ##  🕹️ Control Refinement and Quantitative Evaluation
 
 **Date:** January 1, 2026
