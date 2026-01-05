@@ -3,6 +3,68 @@
 A deep-dive log of technical insights, control theory trade-offs, and architectural decisions made during the development of this playground.
 
 ---
+## 📝 VLA Evolution & SOTA Benchmarking
+
+**Date:** January 3, 2026
+
+**Topic:** Transition from a uni-modal **Diffusion Policy** to a multi-modal **Vision-Language-Action (VLA)** model. This allows the agent to condition its generative denoising process on high-level human instructions, moving the robot from "fixed behavior" to "instruction following."
+
+---
+
+### 2. Architecture: Triple-Conditioned 1D U-Net
+We modified the 1D U-Net architecture to integrate three distinct streams of information using **FiLM (Feature-wise Linear Modulation)**.
+
+#### Conditioning Streams:
+* **Visual:** ResNet-18 backbone providing spatial context.
+* **Temporal:** Sinusoidal or Linear time embeddings informing the denoising step $k$.
+* **Linguistic:** CLIP (ViT-B/32) text embeddings providing semantic intent.
+
+#### Modality Alignment:
+Alignment is achieved by concatenating the 512-dim visual vector, the 128-dim time vector, and the 128-dim projected text vector into a **768-dimensional conditioning bottleneck**. This bottleneck modulates the U-Net's residual blocks, "steering" the action trajectory based on the text prompt.
+
+
+
+---
+
+### 3. SOTA VLA Landscape: Beyond Diffusion
+
+While our implementation uses Diffusion, the industry is shifting toward massive foundation models that align modalities through shared transformer vocabularies or flow matching.
+
+#### A. Physical Intelligence (π): π₀ and π₀.₅
+* **Core Logic:** Uses **Flow Matching** instead of Diffusion. Flow matching learns a direct, straight-line vector field from noise to data, making inference significantly faster (often requiring only 1–3 steps).
+* **Alignment:** π₀ uses a large Pre-trained Vision-Language Model (VLM) as a backbone. It treats the robot as an "output head" of a model that already understands the world through internet-scale text and images.
+
+#### B. 1X Technologies: EVE & NEO
+* **Core Logic:** Focuses on **World Models**. The model is trained to predict the next video frame and the next action simultaneously, ensuring the robot understands the physical consequences of its moves.
+* **Alignment:** Utilizes a **Shared Latent Space**. Through self-supervised learning on massive teleoperation data, vision and language are mapped to a latent state that represents physical "affordances" (e.g., understanding that "pick up" requires a specific gripper state).
+
+#### C. NVIDIA: VILA & Project GR00T
+* **Core Logic:** NVIDIA’s **VILA** (Visual-Language-Action) excels at multi-modal reasoning, allowing the robot to interpret complex constraints (e.g., "The surface is hot, move the cup carefully").
+* **Alignment:** **Cross-Attention Transformers**. NVIDIA treats image patches and text tokens as sequences. In models like GR00T, actions are **discretized into tokens**, effectively turning robot control into a "translation" task where the model translates pixels and English into "motor-language".
+
+
+
+---
+
+### 4. Comparison of Alignment Strategies
+
+| Strategy | Mechanism | SOTA Example |
+| :--- | :--- | :--- |
+| **Feature Fusion** | Concatenating V + L vectors | Early Diffusion Policies |
+| **Cross-Attention** | Action "queries" Vision/Language "keys" | NVIDIA VILA, Octo |
+| **Action-as-Tokens** | Actions are words in a shared vocabulary | Google RT-2, NVIDIA GR00T |
+| **Flow Matching** | Direct vector field from noise to action | Physical Intelligence (π₀) |
+
+---
+
+### 5. Summary of Alignment Logic
+The SOTA "bridge" is a **Transformer Backbone**.
+1.  **Vision** is tokenized into patches.
+2.  **Language** is tokenized into words.
+3.  **The Transformer** uses attention to learn that the word "T-block" in the text refers to a specific cluster of pixels in the image.
+4.  **The Action Head** then projects this "aligned understanding" into motor coordinates ($X, Y$).
+
+---
 ## 🎮 Generative Behavior Cloning via Diffusion Policy
 
 **Date:** January 2, 2026

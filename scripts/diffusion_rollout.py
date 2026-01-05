@@ -51,6 +51,7 @@ def main():
     for t in range(300):
         # A. Process Observation
         img_tensor = img_transform(obs).unsqueeze(0).to(device)
+        print(f"Image Mean: {img_tensor.mean().item():.4f}, Std: {img_tensor.std().item():.4f}")
         with torch.no_grad():
             obs_features = model.vision_encoder(img_tensor)
             if obs_features.ndim == 4: obs_features = obs_features.flatten(1)
@@ -79,6 +80,9 @@ def main():
         # C. Unnormalize the final "Clean" result
         # noisy_action is now our 'action_plan' in normalized space
         action_plan = (noisy_action.squeeze(0) * action_std) + action_mean
+        # Inside the rollout loop, after unnormalization
+        print(f"Action Mean: {action_mean.mean().item():.2f}") 
+        print(f"Sample Action: {action_plan[0].cpu().numpy()}") # Should be pixels (0-512)
 
         # D. Temporal Aggregation (EMA Smoothing)
         action_history = torch.roll(action_history, shifts=-1, dims=0)
