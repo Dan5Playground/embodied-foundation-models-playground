@@ -1,12 +1,13 @@
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+import torchvision.transforms as T
 import clip
 import random
 from diffusers.schedulers.scheduling_ddpm import DDPMScheduler
 from diffusers.optimization import get_scheduler
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
-from src.agents.diffusion_policy_vla import DiffusionPolicy
+from src.agents.diffusion_policy_vla import DiffusionPolicy_v2
 import os
 from tqdm import tqdm
 
@@ -32,7 +33,7 @@ def train_vla():
     dataloader = DataLoader(dataset, batch_size=64, shuffle=True)
     
     # 3. Model & Scheduler Init
-    model = DiffusionPolicy(horizon=horizon).to(device)
+    model = DiffusionPolicy_v2(horizon=horizon).to(device)
     model.clip_model.to(device) # Move CLIP weights to GPU/MPS
     
     noise_scheduler = DDPMScheduler(num_train_timesteps=100, beta_schedule='squaredcos_cap_v2', prediction_type='epsilon')
@@ -42,6 +43,10 @@ def train_vla():
     action_mean = torch.from_numpy(dataset.meta.stats['action']['mean']).to(torch.float32).to(device)
     action_std = torch.from_numpy(dataset.meta.stats['action']['std']).to(torch.float32).to(device)
 
+    img_normalize = T.Normalize(mean=[0.485, 0.456, 0.406], 
+                                std=[0.229, 0.224, 0.225])
+    
+
     print(f"🚀 Training VLA Policy with Prompt Augmentation...")
     model.train()
 
@@ -49,6 +54,8 @@ def train_vla():
         progress_bar = tqdm(dataloader, desc=f"Epoch {epoch}")
         for batch in progress_bar:
             obs_img = batch['observation.image'].to(device)
+            # add image normalization
+            obs_img = img_normalize(obs_img)
             action = (batch['action'].to(device) - action_mean) / action_std
             
             # --- TASK 1: Prompt Augmentation & CFG ---
@@ -83,7 +90,7 @@ def train_vla():
             progress_bar.set_postfix({"loss": f"{loss.item():.4f}"})
         
         if (epoch + 1) % 10 == 0:
-            torch.save(model.state_dict(), f"outputs/vla_policy_aug_epoch_{epoch+1}.pth")
+            torch.save(model.state_dict(), f"outputs/vla_policy_vla_v2_epoch_{epoch+1}.pth")
 
 if __name__ == "__main__":
     train_vla()

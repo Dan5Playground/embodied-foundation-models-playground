@@ -21,7 +21,7 @@ def main():
     # 2. Load Model & Scheduler
     # Make sure you point to your latest checkpoint!
     model = DiffusionPolicy(horizon=16).to(device)
-    model.load_state_dict(torch.load("outputs/diffusion_policy_epoch_30.pth", map_location=device))
+    model.load_state_dict(torch.load("outputs/diffusion_policy_aug_50.pth", map_location=device))
     model.eval()
 
     # We use the same scheduler as training, but we'll use fewer steps for speed
@@ -35,7 +35,7 @@ def main():
     env = gym.make("gym_pusht/PushT-v0", 
                    render_mode="rgb_array", 
                    obs_type="pixels")
-    env = RecordVideo(env, "outputs/videos", name_prefix="diffusion_eval")
+    env = RecordVideo(env, "outputs/videos", name_prefix="diffusion_eval_aug")
     
     img_transform = T.Compose([
         T.ToPILImage(), T.Resize((96, 96)), T.ToTensor(),

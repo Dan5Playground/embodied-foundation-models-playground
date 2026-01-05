@@ -3,6 +3,51 @@
 A deep-dive log of technical insights, control theory trade-offs, and architectural decisions made during the development of this playground.
 
 ---
+
+## VLA Iteration and Architectural Scaling
+
+**Date:** January 4, 2026
+
+**Topic:** Improving linguistic grounding and model capacity to handle the "multimodal" nature of the Push-T task.
+
+### 1. Implementation: VLA Scaling (U-Net v2)
+We performed "architectural surgery" on the 1D U-Net backbone to move beyond a simple bottleneck design toward a more capable encoder-decoder structure.
+
+#### Key Architectural Updates:
+* **Hierarchical Denoising**: We introduced `down_block` and `up_block` layers in `diffusion_policy_vla.py`, allowing the model to process action sequences at multiple temporal resolutions.
+* **Conditioning Fusion**: Maintained a **768-dimensional conditioning vector** that concatenates Visual (ResNet-18), Temporal (Timestep), and Linguistic (CLIP) features.
+* **Language Integration**: Integrated a frozen **CLIP (ViT-B/32)** encoder to provide semantic intent, enabling the model to "understand" the task instruction.
+
+
+
+### 2. Training Strategy: Robustness and Generalization
+To prevent "language-blindness"—where the model ignores text because the instruction is always the same—we implemented two critical SOTA techniques:
+
+* **Prompt Augmentation**: Replaced static instructions with a diverse set of synonyms (e.g., "slide the T-shaped block," "maneuver the block") to force the model to learn the relationship between words and visual entities.
+* **Classifier-Free Guidance (CFG)**: During training, we randomly dropped the text prompt (15% chance) to train a "null" condition. This allows for stronger linguistic "steering" during rollout using a guidance scale.
+
+---
+
+### 3. SOTA VLA Landscape (2025-2026)
+As we scale our architecture, it is essential to benchmark against industry leaders in the VLA space:
+
+| Model | Alignment Strategy | Key Advantage |
+| :--- | :--- | :--- |
+| **π₀ (Physical Intelligence)** | **Flow Matching** | Uses direct vector fields instead of diffusion for smoother, faster 1-3 step trajectories. |
+| **RT-2 (Google)** | **Action Tokenization** | Treats actions as "words" in a shared vocabulary, enabling zero-shot reasoning. |
+| **GR00T (NVIDIA)** | **Cross-Attention** | Maps visual patches and text tokens via attention for high-frequency (120Hz) control. |
+| **1X (World Models)** | **Visual Foresight** | Predicts the future video frame and action simultaneously to "imagine" the outcome. |
+
+
+
+---
+
+## 4. Critical Debugging: Action Range & "Snowblindness"
+We identified that the "stuck in the middle" behavior in rollouts was caused by a **normalization mismatch** rather than a training failure.
+* **The Issue**: The rollout script used an ImageNet `Normalize` transform, resulting in an **Image Mean of 2.33**. This made the ResNet "blind," causing the model to guess the "average" center position of $(261, 261)$.
+* **The Fix**: Aligned the rollout script to use the raw `[0, 1]` image range provided by the `LeRobotDataset` during training.
+
+---
 ## 📝 VLA Evolution & SOTA Benchmarking
 
 **Date:** January 3, 2026

@@ -23,7 +23,7 @@ class ConditionalResidualBlock1D(nn.Module):
         out = self.blocks[1](out)
         return out + x if x.shape == out.shape else out
 
-class DiffusionPolicy(nn.Module):
+class DiffusionPolicy_v2(nn.Module):
     def __init__(self, action_dim=2, horizon=16):
         super().__init__()
         # 1. Vision: ResNet-18
@@ -42,7 +42,18 @@ class DiffusionPolicy(nn.Module):
         # 4. U-Net: Cond = 512 (Vis) + 128 (Time) + 128 (Text) = 768
         cond_dim = 512 + 128 + 128
         self.up_conv = nn.Sequential(nn.Conv1d(action_dim, 256, kernel_size=5, padding=2), nn.Mish())
-        self.mid_block = ConditionalResidualBlock1D(256, 256, cond_dim)
+
+        #self.mid_block = ConditionalResidualBlock1D(256, 256, cond_dim)
+
+        self.down_block = nn.ModuleList([
+            ConditionalResidualBlock1D(256, 256, cond_dim),
+            ConditionalResidualBlock1D(256, 512, cond_dim)
+        ])
+        self.mid_block = ConditionalResidualBlock1D(512, 512, cond_dim)
+        self.up_block = nn.ModuleList([
+            ConditionalResidualBlock1D(512, 512, cond_dim),
+            ConditionalResidualBlock1D(512, 256, cond_dim)
+        ])
         self.final_conv = nn.Conv1d(256, action_dim, kernel_size=1)
 
     def forward(self, noisy_actions, timestep, obs_features, text_features):
@@ -57,6 +68,12 @@ class DiffusionPolicy(nn.Module):
         
         x = noisy_actions.moveaxis(1, 2)
         x = self.up_conv(x)
+
+        for block in self.down_block:
+            x = block(x, obs_cond)
         x = self.mid_block(x, obs_cond)
+        for block in self.up_block:
+            x = block(x, obs_cond)
+            
         x = self.final_conv(x)
         return x.moveaxis(1, 2)

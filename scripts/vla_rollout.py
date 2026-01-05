@@ -5,7 +5,7 @@ import gym_pusht
 import torchvision.transforms as T
 import clip
 from diffusers.schedulers.scheduling_ddpm import DDPMScheduler
-from src.agents.diffusion_policy_vla import DiffusionPolicy
+from src.agents.diffusion_policy_vla import DiffusionPolicy_v2
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from gymnasium.wrappers import RecordVideo
 import os
@@ -22,9 +22,9 @@ def main():
     action_std = torch.from_numpy(dataset.meta.stats['action']['std']).to(torch.float32).to(device)
 
     # 3. Initialize Model and Load VLA Weights
-    model = DiffusionPolicy(horizon=16).to(device)
+    model = DiffusionPolicy_v2(horizon=16).to(device)
     # Update this path to your best performing checkpoint
-    checkpoint_path = "outputs/vla_policy_epoch_27.pth"
+    checkpoint_path = "outputs/vla_policy_vla_v2_epoch_50.pth"
     if os.path.exists(checkpoint_path):
         model.load_state_dict(torch.load(checkpoint_path, map_location=device))
         print(f"✅ Loaded weights from {checkpoint_path}")
@@ -43,7 +43,7 @@ def main():
 
     # 5. Environment and Language Prompt
     env = gym.make("gym_pusht/PushT-v0", render_mode="rgb_array", obs_type="pixels")
-    env = RecordVideo(env, "outputs/videos", name_prefix="vla_eval")
+    env = RecordVideo(env, "outputs/videos", name_prefix="vla_eval_v2_")
     
     prompt = "push the T-block to the goal"
     text_tokens = clip.tokenize([prompt]).to(device)
@@ -52,7 +52,8 @@ def main():
     img_transform = T.Compose([
         T.ToPILImage(), 
         T.Resize((96, 96)), 
-        T.ToTensor()
+        T.ToTensor(),
+        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
     obs, info = env.reset()
@@ -101,8 +102,8 @@ def main():
         total_weight = 0
         for j in range(16):
             # Give more weight to newer predictions for the same timestep
-            weight = np.exp(-0.25 * (15 - j))
-            final_action += action_history[j, 15 - j] * weight
+            weight = np.exp(-0.25 * j)
+            final_action += action_history[15 - j, j] * weight
             total_weight += weight
         
         # E. Step Environment
